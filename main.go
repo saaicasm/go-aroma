@@ -1,24 +1,17 @@
 package main
 
-import (
-	"log"
-)
+import "log"
 
-type User struct {
-	FirstName string
-}
-
-func (m *User) printName() string {
-	log.Println("Check this :", m)
-	return m.FirstName
-}
 func main() {
-	var myUsr User
-	myUsr.FirstName = "Lego"
+	var myString string
+	myString = "Lego"
 
-	myUsr2 := User{}
+	log.Println("This is my variable :", myString)
 
-	log.Println("My User 1 is :", myUsr.printName())
-	log.Println("This should be default: ", myUsr2.printName())
-	// log.Println("My User 2 is :", myUsr2.printName())
+	log.Println(&myString)
+
+	sh := &myString
+
+	log.Println("This is pointer to the me add of my variable :", *sh)
+
 }
