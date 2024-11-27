@@ -1,23 +1,24 @@
 package main
 
-import "log"
+import (
+	"github/iamlego/mypack/helpers"
+	"log"
+)
+
+const numPool = 1000
+
+func CalculateValue(intChan chan int) {
+	randomNumber := helpers.RandomNumber(numPool)
+	intChan <- randomNumber
+}
 
 func main() {
-	var myString string
-	myString = "Lego"
+	intChan := make(chan int)
+	defer close(intChan)
 
-	log.Println("This is my variable :", myString)
+	go CalculateValue(intChan)
 
-	log.Println(&myString)
+	num := <-intChan
 
-	sh := &myString
-
-	log.Println("This is pointer to the me add of my variable :", *sh)
-
-	animals := []string{"Dog", "cat", "fish", "ostrich"}
-
-	for _, animal := range animals {
-		log.Println(animal)
-	}
-
+	log.Println(num)
 }
