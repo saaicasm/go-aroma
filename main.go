@@ -14,4 +14,10 @@ func main() {
 
 	log.Println("This is pointer to the me add of my variable :", *sh)
 
+	animals := []string{"Dog", "cat", "fish", "ostrich"}
+
+	for _, animal := range animals {
+		log.Println(animal)
+	}
+
 }
