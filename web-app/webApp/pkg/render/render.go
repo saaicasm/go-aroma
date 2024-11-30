@@ -1,52 +1,95 @@
 package render
 
 import (
-	"fmt"
+	"bytes"
+	"github/iamlego/go-web/pkg/config"
 	"html/template"
 	"log"
 	"net/http"
+	"path/filepath"
 )
 
-var tc = make(map[string]*template.Template)
 
-func RenderTemplate(w http.ResponseWriter, t string) {
-	var tmpl *template.Template
-	var err error
+var app *config.AppConfig
 
-	_, inMap := tc[t]
-	if !inMap {
-		// need to create the template
-		log.Println("creating template and adding to cache")
-		err = createTemplateCache(t)
-		if err != nil {
-			log.Println(err)
-		}
-	} else {
+func NewTemplates(a *config.AppConfig) {
+	app = a
+}
 
-		log.Println("using cached template")
+func RenderTemplate(w http.ResponseWriter, tmpl string) {
+	var tc map[string]*template.Template
+	if app.UseCache {
+		// get template cache from app config
+		tc = app.TemplateCache
+
+	}else{
+		tc, _ = CreateTemplateCache()
 	}
 
-	tmpl = tc[t]
 
-	err = tmpl.Execute(w, nil)
+	
+
+	//get the template from cache
+	t, ok := tc[tmpl]
+
+	if !ok {
+		log.Fatal("Error getting template")
+	}
+
+	buf := new(bytes.Buffer)
+
+	err := t.Execute(buf, nil)
 	if err != nil {
 		log.Println(err)
 	}
+
+	//render the template
+	_, err = buf.WriteTo(w)
+	if err != nil {
+		log.Println(err)
+	}
+
 }
 
-func createTemplateCache(t string) error {
-	templates := []string{
-		fmt.Sprintf("./templates/%s", t),
-		"./templates/base.layout.tmpl",
-	}
+func CreateTemplateCache() (map[string]*template.Template, error) {
+	//will take no args
+	//will return map of string -> template , error
 
-	// parse the template
-	tmpl, err := template.ParseFiles(templates...)
+
+	myCache := map[string]*template.Template{}
+
+	pages, err := filepath.Glob("../.././templates/*.page.tmpl")
+
+
 	if err != nil {
-		return err
+		return myCache, err
 	}
 
-	tc[t] = tmpl
+	for _, page := range pages {
+		name := filepath.Base(page)
 
-	return nil
+		ts, err := template.New(name).ParseFiles(page)
+		if err != nil {
+			return myCache, err
+		}
+
+		matches, err := filepath.Glob("../.././templates/*layout.tmpl")
+		if err != nil {
+			return myCache, err
+		}
+
+		if len(matches) > 0 {
+			ts, err = ts.ParseGlob("../.././templates/*layout.tmpl")
+			if err != nil {
+				return myCache, err
+			}
+		}
+
+		myCache[name] = ts
+
+	}
+
+
+	return myCache, nil
+
 }
