@@ -7,45 +7,54 @@ import (
 	"github/iamlego/go-web/pkg/render"
 	"log"
 	"net/http"
+	"time"
+
+	"github.com/alexedwards/scs/v2"
 )
 
 const port = ":3000"
 
+var app config.AppConfig
+var session *scs.SessionManager
+
 func main() {
 
-	var app config.AppConfig
+	// change this to true in Production
+	app.InProduction = false
+
+	session = scs.New()
+	session.Lifetime = 24 * time.Hour
+	session.Cookie.Persist = true
+	session.Cookie.SameSite = http.SameSiteLaxMode
+	session.Cookie.Secure = false
+
+	app.Session = session
 
 	tc, err := render.CreateTemplateCache()
 	if err != nil {
-		log.Fatal("cant create templ cache")
+		log.Fatal("cannot create template cache")
 	}
 
 	app.TemplateCache = tc
 	app.UseCache = false
 
-	repo := handler.NewRepo(&app) // get repo from handler and add app to it
-	handler.NewHandler(repo)      // send back the updated repo with tc to handler
+	repo := handler.NewRepo(&app)
+	handler.NewHandlers(repo)
 
 	render.NewTemplates(&app)
 
-	http.HandleFunc("/", handler.Repo.Home)
-	http.HandleFunc("/About", handler.Repo.About)
+	// http.HandleFunc("/", handler.Repo.Home)
+	// http.HandleFunc("/About", handler.Repo.About)
 
-	log.Println(fmt.Sprintf("The server is running on Port %s", port))
-	_ = http.ListenAndServe(port, nil)
+	fmt.Println(fmt.Sprintf("Staring application on port %s", port))
+	// _ = http.ListenAndServe(port, nil)
+
+	srv := &http.Server{
+		Addr:    port,
+		Handler: routes(&app),
+	}
+
+	err = srv.ListenAndServe()
+	log.Fatal(err)
+
 }
-
-// package main
-
-// import (
-// 	"log"
-// 	"path/filepath"
-// )
-
-// func main() {
-
-// 	pages, err := filepath.Glob("../.././templates/*.page.tmpl")
-
-// 	log.Println(pages, err)
-
-// }
