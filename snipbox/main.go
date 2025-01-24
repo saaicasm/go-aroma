@@ -24,16 +24,27 @@ func snippetView(w http.ResponseWriter, r *http.Request) {
 }
 
 func snippetCreate(w http.ResponseWriter, r *http.Request) {
+	inp := r.PathValue("query")
+	fmt.Println("Query", inp)
 	w.Write([]byte("Create a new Snippet!"))
+}
+
+func snippetCreatePost(w http.ResponseWriter, r *http.Request) {
+	w.Write([]byte("This is Initial"))
+	w.WriteHeader(http.StatusCreated)
+
+	fmt.Println("The snippet was created!!")
+
 }
 
 func main() {
 
 	mux := http.NewServeMux()
 
-	mux.HandleFunc("/{$}", home)
-	mux.HandleFunc("/snippet/view/{id}", snippetView)
-	mux.HandleFunc("/snippet/create", snippetCreate)
+	mux.HandleFunc("GET /{$}", home)
+	mux.HandleFunc("GET /snippet/view/{id}", snippetView)
+	mux.HandleFunc("GET /snippet/create/{query}", snippetCreate)
+	mux.HandleFunc("POST /snippet/create/{action}", snippetCreatePost)
 
 	log.Println("Server running on port 4000")
 	err := http.ListenAndServe(":4000", mux)
