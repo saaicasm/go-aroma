@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"html/template"
 	"net/http"
 	"strconv"
 )
@@ -10,25 +9,18 @@ import (
 func (app *application) home(w http.ResponseWriter, r *http.Request) {
 	w.Header().Add("Server", "Go")
 
-	files := []string{"./internal/ui/html/pages/home.tmpl",
-		"./internal/ui/html/pages/base.tmpl",
-		"./internal/ui/html/pages/nav.tmpl",
-	}
-
-	ts, err := template.ParseFiles(files...)
-
-	if err != nil {
-		app.serverError(w, r, err)
-		return
-
-	}
-
-	err = ts.ExecuteTemplate(w, "base", nil)
+	snippets, err := app.snippets.Latest()
 
 	if err != nil {
 		app.serverError(w, r, err)
 		return
 	}
+
+	td := templateData{
+		Snippets: snippets,
+	}
+
+	app.render(w, r, http.StatusOK, "home.tmpl", td)
 
 }
 
@@ -39,7 +31,19 @@ func (app *application) snippetView(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Fprintf(w, "Display a specific snippet with ID %d...", id)
+	snippet, err := app.snippets.Get(id)
+
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+
+	td := templateData{
+		Snippet: snippet,
+	}
+
+	app.render(w, r, http.StatusOK, "view.tmpl", td)
+
 }
 
 func (app *application) snippetCreate(w http.ResponseWriter, r *http.Request) {
@@ -47,6 +51,16 @@ func (app *application) snippetCreate(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *application) snippetCreatePost(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusCreated)
-	w.Write([]byte("Save a new snippet..."))
+	title := "Balsamiq Glaze"
+	content := "FUck i dont know what that \n is. I just know I like it\n"
+	expires := 8
+
+	id, err := app.snippets.Insert(title, content, expires)
+
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+
+	http.Redirect(w, r, fmt.Sprintf("/snippets/view/%d", id), http.StatusSeeOther)
 }
