@@ -4,12 +4,21 @@ import (
 	"github/saaicasm/snipbox/internal/models"
 	"path/filepath"
 	"text/template"
+	"time"
 )
 
 type templateData struct {
 	CurrentYear int
 	Snippet     models.Snippet
 	Snippets    []models.Snippet
+}
+
+func readableDate(t time.Time) string {
+	return t.Format("02 Jan 2006 at 15:04")
+}
+
+var functions = template.FuncMap{
+	"readableDate": readableDate,
 }
 
 func createTemplateCache() (map[string]*template.Template, error) {
@@ -32,7 +41,7 @@ func createTemplateCache() (map[string]*template.Template, error) {
 			page,
 		}
 
-		ts, err := template.ParseFiles(files...)
+		ts, err := template.New(name).Funcs(functions).ParseFiles(files...)
 
 		if err != nil {
 			return nil, err
