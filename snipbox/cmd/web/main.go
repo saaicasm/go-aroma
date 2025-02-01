@@ -10,6 +10,7 @@ import (
 	"os"
 	"text/template"
 
+	"github.com/go-playground/form"
 	_ "github.com/go-sql-driver/mysql"
 )
 
@@ -17,6 +18,7 @@ type application struct {
 	logger        *slog.Logger
 	snippets      *models.SnippetModel
 	templateCache map[string]*template.Template
+	formDecoder   *form.Decoder
 }
 
 func main() {
@@ -39,6 +41,8 @@ func main() {
 
 	templateCache, err := createTemplateCache()
 
+	formDecoder := form.NewDecoder()
+
 	if err != nil {
 		logger.Error(err.Error())
 		os.Exit(1)
@@ -48,6 +52,7 @@ func main() {
 		logger:        logger,
 		snippets:      &models.SnippetModel{DB: db},
 		templateCache: templateCache,
+		formDecoder:   formDecoder,
 	}
 
 	log.Printf("starting server on :%s", *addr)

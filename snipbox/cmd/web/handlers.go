@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"log"
+	"github/saaicasm/snipbox/internal/validator"
 	"net/http"
 	"strconv"
 	"strings"
@@ -10,10 +10,10 @@ import (
 )
 
 type SnippetCreateForm struct {
-	Title       string
-	Content     string
-	Expires     int
-	FieldErrors map[string]string
+	Title               string `form:"title"`
+	Content             string `form:"content"`
+	Expires             int    `form:"expires"`
+	validator.Validator `form:"-"`
 }
 
 func (app *application) home(w http.ResponseWriter, r *http.Request) {
@@ -71,48 +71,53 @@ func (app *application) snippetCreatePost(w http.ResponseWriter, r *http.Request
 		app.clientError(w, http.StatusBadRequest)
 		return
 	}
+
+	var form snippetCreateForm
+
+	err = app.formDecoder.Decode(&form, r.PostForm)
+	if err != nil {
+		app.clientError(w, http.StatusBadRequest)
+		return
+	}
+
 	expires, err := strconv.Atoi(r.PostForm.Get("expires"))
 	if err != nil {
 		app.clientError(w, http.StatusBadRequest)
 		return
 	}
-	Form := SnippetCreateForm{
-		Title:       r.PostForm.Get("title"),
-		Content:     r.PostForm.Get("content"),
-		Expires:     expires,
-		FieldErrors: map[string]string{},
-	}
 
-	if strings.TrimSpace(Form.Title) == "" {
-		Form.FieldErrors["title"] = "The title is Empty"
-	} else if utf8.RuneCountInString(Form.Content) > 100 {
-		Form.FieldErrors["content"] = "The content is too long must be less than 100 characters"
+	form.CheckField(validator.NotBlank(form.Title), "title", "This field cannot be blank")
+	form.CheckField(validator.MaxChars(form.Title, 100), "title", "This field cannot be more than 100 characters long")
+	form.CheckField(validator.NotBlank(form.Content), "content", "This field cannot be blank")
+	form.CheckField(validator.PermittedValue(form.Expires, 1, 7, 365), "expires", "This field must equal 1, 7 or 365")
+
+	if strings.TrimSpace(form.Title) == "" {
+		form.FieldErrors["title"] = "The title is Empty"
+	} else if utf8.RuneCountInString(form.Content) > 100 {
+		form.FieldErrors["content"] = "The content is too long must be less than 100 characters"
 	}
 
 	if strings.TrimSpace("content") == "" {
-		Form.FieldErrors["content"] = "The content is empty"
+		form.FieldErrors["content"] = "The content is empty"
 	}
 
 	if expires != 1 && expires != 7 && expires != 365 {
-		Form.FieldErrors["expires"] = "Enter a valid expiry date"
+		form.FieldErrors["expires"] = "Enter a valid expiry date"
 	}
 
-	if len(Form.FieldErrors) > 0 {
-		td := templateData{
-			Form: Form,
-		}
-		app.render(w, r, http.StatusUnprocessableEntity, "create.tmpl", td)
+	if !form.Valid() {
+		data := app.newTemplateData(r)
+		data.Form = form
+		app.render(w, r, http.StatusUnprocessableEntity, "create.tmpl", data)
 		return
 	}
 
-	id, err := app.snippets.Insert(Form.Title, Form.Content, Form.Expires)
+	id, err := app.snippets.Insert(form.Title, form.Content, form.Expires)
 
 	if err != nil {
 		app.serverError(w, r, err)
 		return
 	}
-
-	log.Println(id)
 
 	http.Redirect(w, r, fmt.Sprintf("/snippet/view/%d", id), http.StatusSeeOther)
 
