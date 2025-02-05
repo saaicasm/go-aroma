@@ -23,4 +23,6 @@ go.work.sum
 go.sum
 
 # env file
-.env
+.envtls/
+
+tls/
