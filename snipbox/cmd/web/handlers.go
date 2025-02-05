@@ -14,6 +14,13 @@ type SnippetCreateForm struct {
 	validator.Validator `form:"-"`
 }
 
+type UserSignUpForm struct {
+	Name                string `form:"name"`
+	Email               string `form:"email"`
+	Password            string `form:"password"`
+	validator.Validator `form:"-"`
+}
+
 func (app *application) home(w http.ResponseWriter, r *http.Request) {
 
 	snippets, err := app.snippets.Latest()
@@ -99,4 +106,23 @@ func (app *application) snippetCreatePost(w http.ResponseWriter, r *http.Request
 
 	http.Redirect(w, r, fmt.Sprintf("/snippet/view/%d", id), http.StatusSeeOther)
 
+}
+
+func (app *application) userSignup(w http.ResponseWriter, r *http.Request) {
+	data := app.newTemplateData(r)
+	data.Form = UserSignUpForm{}
+	app.render(w, r, http.StatusOK, "signup.tmpl", data)
+
+}
+func (app *application) UserSignUpPost(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprintf(w, "Post Sign up for new User")
+}
+func (app *application) UserLogin(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprintf(w, "Log in for new User")
+}
+func (app *application) UserLoginPost(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprintf(w, "Post Log in for new User")
+}
+func (app *application) UserLogoutPost(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprintf(w, "Log Out")
 }
