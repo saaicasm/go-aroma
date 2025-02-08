@@ -213,11 +213,21 @@ func (app *application) UserLoginPost(w http.ResponseWriter, r *http.Request) {
 
 	app.sessionManager.Put(r.Context(), "authenticatedUserID", id)
 
-	
-
 	http.Redirect(w, r, "/snippet/create", http.StatusSeeOther)
 
 }
 func (app *application) UserLogoutPost(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "Log Out")
+
+	err := app.sessionManager.RenewToken(r.Context())
+	if err != nil {
+		app.serverError(w, r, err)
+		return
+	}
+
+	app.sessionManager.Remove(r.Context(), "authenticatedID")
+
+	app.sessionManager.Put(r.Context(), "flash", "Log out Succesful!")
+
+	http.Redirect(w, r, "/", http.StatusSeeOther)
+
 }
