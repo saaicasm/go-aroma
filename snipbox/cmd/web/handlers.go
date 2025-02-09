@@ -41,6 +41,8 @@ func (app *application) home(w http.ResponseWriter, r *http.Request) {
 	td := app.newTemplateData(r)
 	td.Snippets = snippets
 
+	fmt.Println(td.IsAuthenticated)
+
 	app.render(w, r, http.StatusOK, "home.tmpl", td)
 
 }
@@ -62,6 +64,8 @@ func (app *application) snippetView(w http.ResponseWriter, r *http.Request) {
 	td := app.newTemplateData(r)
 	td.Snippet = snippet
 
+	fmt.Println(td.IsAuthenticated)
+
 	app.render(w, r, http.StatusOK, "view.tmpl", td)
 
 }
@@ -72,6 +76,8 @@ func (app *application) snippetCreate(w http.ResponseWriter, r *http.Request) {
 	td.Form = SnippetCreateForm{
 		Expires: 365,
 	}
+
+	fmt.Println(td.IsAuthenticated)
 
 	app.render(w, r, http.StatusOK, "create.tmpl", td)
 }
@@ -97,6 +103,9 @@ func (app *application) snippetCreatePost(w http.ResponseWriter, r *http.Request
 	if !form.Valid() {
 		data := app.newTemplateData(r)
 		data.Form = form
+
+		fmt.Println(data.IsAuthenticated)
+
 		app.render(w, r, http.StatusUnprocessableEntity, "create.tmpl", data)
 		return
 	}
@@ -117,6 +126,9 @@ func (app *application) snippetCreatePost(w http.ResponseWriter, r *http.Request
 func (app *application) userSignup(w http.ResponseWriter, r *http.Request) {
 	data := app.newTemplateData(r)
 	data.Form = UserSignUpForm{}
+
+	fmt.Println(data.IsAuthenticated)
+
 	app.render(w, r, http.StatusOK, "signup.tmpl", data)
 
 }
@@ -141,6 +153,9 @@ func (app *application) UserSignUpPost(w http.ResponseWriter, r *http.Request) {
 	if !form.Valid() {
 		data := app.newTemplateData(r)
 		data.Form = form
+
+		fmt.Println(data.IsAuthenticated)
+
 		app.render(w, r, http.StatusUnprocessableEntity, "signup.tmpl", data)
 		return
 	}
@@ -218,15 +233,16 @@ func (app *application) UserLoginPost(w http.ResponseWriter, r *http.Request) {
 }
 func (app *application) UserLogoutPost(w http.ResponseWriter, r *http.Request) {
 
+	app.sessionManager.Remove(r.Context(), "authenticatedID")
+
 	err := app.sessionManager.RenewToken(r.Context())
 	if err != nil {
 		app.serverError(w, r, err)
 		return
 	}
-
-	app.sessionManager.Remove(r.Context(), "authenticatedID")
-
 	app.sessionManager.Put(r.Context(), "flash", "Log out Succesful!")
+
+	app.sessionManager.Clear(r.Context())
 
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 
