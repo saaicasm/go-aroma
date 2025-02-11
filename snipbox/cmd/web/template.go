@@ -2,6 +2,8 @@ package main
 
 import (
 	"github/saaicasm/snipbox/internal/models"
+	"github/saaicasm/snipbox/internal/ui"
+	"io/fs"
 	"path/filepath"
 	"text/template"
 	"time"
@@ -18,7 +20,12 @@ type templateData struct {
 }
 
 func readableDate(t time.Time) string {
-	return t.Format("02 Jan 2006 at 15:04")
+
+	if t.IsZero() {
+		return ""
+	}
+
+	return t.UTC().Format("02 Jan 2006 at 15:04")
 }
 
 var functions = template.FuncMap{
@@ -29,7 +36,7 @@ func createTemplateCache() (map[string]*template.Template, error) {
 
 	cache := map[string]*template.Template{}
 
-	pages, err := filepath.Glob("internal/ui/html/pages/*.tmpl")
+	pages, err := fs.Glob(ui.Files, "html/pages/*.tmpl")
 
 	if err != nil {
 		return nil, err
@@ -39,13 +46,13 @@ func createTemplateCache() (map[string]*template.Template, error) {
 
 		name := filepath.Base(page)
 
-		files := []string{
-			"internal/ui/html/pages/base.tmpl",
-			"internal/ui/html/pages/nav.tmpl",
+		patterns := []string{
+			"html/base.tmpl",
+			"html/partials/*.tmpl",
 			page,
 		}
 
-		ts, err := template.New(name).Funcs(functions).ParseFiles(files...)
+		ts, err := template.New(name).Funcs(functions).ParseFS(ui.Files, patterns...)
 
 		if err != nil {
 			return nil, err

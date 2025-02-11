@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github/saaicasm/snipbox/internal/ui"
 	"net/http"
 
 	"github.com/justinas/alice"
@@ -8,8 +9,8 @@ import (
 
 func (app *application) routes() http.Handler {
 	mux := http.NewServeMux()
-	fileserver := http.FileServer(http.Dir(("./internal/ui/static")))
-	mux.Handle("GET /static/", http.StripPrefix("/static", fileserver))
+	// mux.Handle("GET /static/", http.StripPrefix("/static", fileserver))
+	mux.Handle("GET /static/", http.FileServerFS(ui.Files))
 
 	// unprotected
 	dynamic := alice.New(app.sessionManager.LoadAndSave, noSurf, app.authenticate)
