@@ -29,6 +29,8 @@ func (app *application) routes() http.Handler {
 	mux.Handle("POST /snippet/create", protected.ThenFunc(app.snippetCreatePost))
 	mux.Handle("POST /user/logout", protected.ThenFunc(app.UserLogoutPost))
 
+	mux.HandleFunc("GET /ping", ping)
+
 	chain := alice.New(app.recoverPanic, app.logRequest, commonHeaders)
 
 	return chain.Then(mux)
