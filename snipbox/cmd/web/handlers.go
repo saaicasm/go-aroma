@@ -49,7 +49,7 @@ func (app *application) home(w http.ResponseWriter, r *http.Request) {
 
 func (app *application) snippetView(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.Atoi(r.PathValue("id"))
-	if err != nil {
+	if err != nil || id <= 0 {
 		http.NotFound(w, r)
 		return
 	}
@@ -57,6 +57,12 @@ func (app *application) snippetView(w http.ResponseWriter, r *http.Request) {
 	snippet, err := app.snippets.Get(id)
 
 	if err != nil {
+
+		if errors.Is(err, models.ErrNoRecord) {
+			http.NotFound(w, r)
+			return
+		}
+
 		app.serverError(w, r, err)
 		return
 	}

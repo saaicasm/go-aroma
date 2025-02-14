@@ -7,10 +7,10 @@ import (
 
 var mockSnippet = models.Snippet{
 	ID:      1,
-	Title:   "Mock",
-	Content: "Fake, Stub",
+	Title:   "An old silent pond",
+	Content: "An old silent pond...",
 	Created: time.Now(),
-	Expires: <-time.After(10),
+	Expires: time.Now(),
 }
 
 type SnippetModel struct{}
@@ -23,6 +23,8 @@ func (m *SnippetModel) Get(id int) (models.Snippet, error) {
 	switch id {
 	case 1:
 		return mockSnippet, nil
+	case -1, 0:
+		return models.Snippet{}, models.ErrNoRecord
 	default:
 		return models.Snippet{}, models.ErrNoRecord
 	}
