@@ -47,6 +47,13 @@ func (app *application) home(w http.ResponseWriter, r *http.Request) {
 
 }
 
+func (app *application) aboutView(w http.ResponseWriter, r *http.Request) {
+
+	td := app.newTemplateData(r)
+
+	app.render(w, r, http.StatusOK, "about.tmpl", td)
+}
+
 func (app *application) snippetView(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.Atoi(r.PathValue("id"))
 	if err != nil || id <= 0 {
