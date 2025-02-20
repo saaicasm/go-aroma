@@ -264,3 +264,32 @@ func (app *application) UserLogoutPost(w http.ResponseWriter, r *http.Request) {
 func ping(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("OK"))
 }
+
+func (app *application) accountView(w http.ResponseWriter, r *http.Request) {
+	id, err := strconv.Atoi(r.PathValue("id"))
+	if err != nil || id <= 0 {
+		http.NotFound(w, r)
+		return
+	}
+
+	user, err := app.users.Get(id)
+
+	if err != nil {
+
+		if errors.Is(err, models.ErrNoRecord) {
+			http.NotFound(w, r)
+			return
+		}
+
+		app.serverError(w, r, err)
+		return
+	}
+
+	td := app.newTemplateData(r)
+	td.User = user
+
+	fmt.Printf("This is user %v", user)
+
+	app.render(w, r, http.StatusOK, "view.tmpl", td)
+
+}
