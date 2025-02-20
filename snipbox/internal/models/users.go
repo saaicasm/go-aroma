@@ -10,7 +10,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-type users struct {
+type User struct {
 	ID             int
 	Name           string
 	Email          string
@@ -26,6 +26,7 @@ type UserModelInterface interface {
 	Insert(name, email, password string) error
 	Authenticate(email, password string) (int, error)
 	Exists(id int) (bool, error)
+	Get(id int) (User, error)
 }
 
 func (m *UserModel) Insert(name string, email string, password string) error {
@@ -94,4 +95,24 @@ func (m *UserModel) Exists(id int) (bool, error) {
 	err := m.DB.QueryRow(stmt, id).Scan(&exists)
 
 	return exists, err
+}
+
+func (m *UserModel) Get(id int) (User, error) {
+
+	stmt := `SELECT id, name, created FROM users
+    		 AND id = ?`
+
+	var u User
+
+	err := m.DB.QueryRow(stmt, id).Scan(&u.ID, &u.Name, &u.Created)
+
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return User{}, ErrNoRecord
+		} else {
+			return User{}, err
+		}
+	}
+
+	return u, nil
 }
