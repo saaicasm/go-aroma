@@ -1,0 +1,28 @@
+{{define "title"}}Your Account{{end}}
+
+{{define "main"}}
+    <h2>Your Account</h2>
+    {{with .User}}
+     <table>
+        <tr>
+            <th>Name</th>
+            <td>{{.Name}}</td>
+        </tr>
+        <tr>
+            <th>Email</th>
+            <td>{{.Email}}</td>
+        </tr>
+        <tr>
+            <th>Joined</th>
+            <td>{{readableDate .Created}}</td>
+        </tr>
+    </table>
+    <div>
+    <form action='/account/password/update' method='GET'
+        <a href='/'>
+            <input type='submit' value='Change Password'>
+        </a>
+    </form>
+    </div>
+    {{end }}
+{{end}}
