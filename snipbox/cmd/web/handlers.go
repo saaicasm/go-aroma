@@ -90,8 +90,6 @@ func (app *application) snippetCreate(w http.ResponseWriter, r *http.Request) {
 		Expires: 365,
 	}
 
-	fmt.Println(td.IsAuthenticated)
-
 	app.render(w, r, http.StatusOK, "create.tmpl", td)
 }
 
@@ -266,30 +264,21 @@ func ping(w http.ResponseWriter, r *http.Request) {
 }
 
 func (app *application) accountView(w http.ResponseWriter, r *http.Request) {
-	id, err := strconv.Atoi(r.PathValue("id"))
-	if err != nil || id <= 0 {
-		http.NotFound(w, r)
-		return
-	}
 
-	user, err := app.users.Get(id)
-
+	userID := app.sessionManager.GetInt(r.Context(), "authenticatedUserID")
+	user, err := app.users.Get(userID)
 	if err != nil {
-
 		if errors.Is(err, models.ErrNoRecord) {
-			http.NotFound(w, r)
-			return
+			http.Redirect(w, r, "/user/login", http.StatusSeeOther)
+		} else {
+			app.serverError(w, r, err)
 		}
-
-		app.serverError(w, r, err)
 		return
 	}
 
-	td := app.newTemplateData(r)
-	td.User = user
+	data := app.newTemplateData(r)
+	data.User = user
 
-	fmt.Printf("This is user %v", user)
-
-	app.render(w, r, http.StatusOK, "view.tmpl", td)
+	app.render(w, r, http.StatusOK, "account.tmpl", data)
 
 }

@@ -99,12 +99,12 @@ func (m *UserModel) Exists(id int) (bool, error) {
 
 func (m *UserModel) Get(id int) (User, error) {
 
-	stmt := `SELECT id, name, created FROM users
-    		 AND id = ?`
+	stmt := `SELECT id, name,email, created FROM users
+    		 WHERE id = ?`
 
 	var u User
 
-	err := m.DB.QueryRow(stmt, id).Scan(&u.ID, &u.Name, &u.Created)
+	err := m.DB.QueryRow(stmt, id).Scan(&u.ID, &u.Name, &u.Email, &u.Created)
 
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
