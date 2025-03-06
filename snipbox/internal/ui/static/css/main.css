@@ -3,7 +3,7 @@
     margin: 0;
     padding: 0;
     font-size: 18px;
-    font-family: "Ubuntu Mono", monospace;
+    font-family: "monaco", monospace;
 }
 
 html, body {
@@ -12,8 +12,8 @@ html, body {
 
 body {
     line-height: 1.5;
-    background-color: #F1F3F6;
-    color: #34495E;
+    background-color: #d2dcec;
+    color: #364b60;
     overflow-y: scroll;
 }
 
