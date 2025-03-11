@@ -2,13 +2,14 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 
 	"github.com/gorilla/mux"
 )
 
-func WriteJSON(w http.ResponseWriter, status int, v any) Error {
+func WriteJSON(w http.ResponseWriter, status int, v any) error {
 	w.WriteHeader(status)
 	w.Header().Set("Content-Type", "application/json")
 	return json.NewEncoder(w).Encode(v)
@@ -37,9 +38,15 @@ func (s *APIServer) Run() {
 
 	router.HandleFunc("/account", makeHTTPHandleFunc(s.handleAccount))
 
+	router.HandleFunc("/account/{id}", makeHTTPHandleFunc(s.handleGetAccount))
+
 	log.Println("JSON API server running on port : ", s.listenAddr)
 
-	http.ListenAndServe(s.listenAddr, router)
+	err := http.ListenAndServe(s.listenAddr, router)
+	if err != nil {
+		fmt.Println(err)
+	}
+
 }
 
 func NewAPIServer(listenAddr string) *APIServer {
@@ -49,11 +56,29 @@ func NewAPIServer(listenAddr string) *APIServer {
 }
 
 func (s *APIServer) handleAccount(w http.ResponseWriter, r *http.Request) error {
-	return nil
+	switch r.Method {
+	case "GET":
+		return s.handleGetAccount(w, r)
+	case "POST":
+		return s.handleCreateAccount(w, r)
+	case "DELETE":
+		return s.handleDeleteAccount(w, r)
+	default:
+		return fmt.Errorf("Method not allowed %s", r.Method)
+	}
+
 }
 
 func (s *APIServer) handleGetAccount(w http.ResponseWriter, r *http.Request) error {
+
+	vars := mux.Vars(r)
+
+	fmt.Println(vars["id"])
+
+	WriteJSON(w, http.StatusOK, Account{})
+
 	return nil
+
 }
 
 func (s *APIServer) handleCreateAccount(w http.ResponseWriter, r *http.Request) error {
