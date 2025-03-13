@@ -19,7 +19,7 @@ func (s *APIServer) Run() {
 
 	router.HandleFunc("/account", makeHTTPHandleFunc(s.handleAccount))
 
-	router.HandleFunc("/account/{id}", makeHTTPHandleFunc(s.handleGetAccount))
+	router.HandleFunc("/account/{id}", makeHTTPHandleFunc(s.handleGetAccountbyID))
 
 	log.Println("JSON API server running on port : ", s.listenAddr)
 
@@ -46,12 +46,23 @@ func (s *APIServer) handleAccount(w http.ResponseWriter, r *http.Request) error 
 	case "DELETE":
 		return s.handleDeleteAccount(w, r)
 	default:
-		return fmt.Errorf("Method not allowed %s", r.Method)
+		return fmt.Errorf("method not allowed %s", r.Method)
 	}
 
 }
 
 func (s *APIServer) handleGetAccount(w http.ResponseWriter, r *http.Request) error {
+
+	accounts, err := s.store.GetAccounts()
+
+	if err != nil {
+		return err
+	}
+
+	return WriteJSON(w, http.StatusOK, accounts)
+}
+
+func (s *APIServer) handleGetAccountbyID(w http.ResponseWriter, r *http.Request) error {
 
 	vars := mux.Vars(r)
 
@@ -71,10 +82,6 @@ func (s *APIServer) handleCreateAccount(w http.ResponseWriter, r *http.Request) 
 		return err
 	}
 
-	// account := &Account{
-	// 	FirstName: createAccountReq.FirstName,
-	// 	Lastname:  createAccountReq.LastName,
-	// }
 	account := NewAccount(createAccountReq.FirstName, createAccountReq.LastName)
 
 	if err := s.store.CreateAccount(account); err != nil {
