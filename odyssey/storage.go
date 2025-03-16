@@ -55,7 +55,7 @@ func (s *PostgresStore) CreateAccountTable() error {
 		last_name VARCHAR(50),
 		number SERIAL UNIQUE,
 		balance DECIMAL(10,2),
-		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAxMP
 	);`
 
 	_, err := s.db.Exec(query)
@@ -101,18 +101,10 @@ func (s *PostgresStore) GetAccounts() ([]*Account, error) {
 
 	for rows.Next() {
 		account := new(Account)
-		if err = rows.Scan(
-			&account.ID,
-			&account.FirstName,
-			&account.Lastname,
-			&account.Number,
-			&account.Balance,
-			&account.CreatedAt,
-		); err != nil {
-			fmt.Println("Error is in scan account")
+		account, err := scanIntoAccount(rows)
+		if err != nil {
 			return nil, err
 		}
-
 		accounts = append(accounts, account)
 	}
 
@@ -120,7 +112,32 @@ func (s *PostgresStore) GetAccounts() ([]*Account, error) {
 
 }
 
-func (s *PostgresStore) DeleteAccount(int) error {
+func scanIntoAccount(rows *sql.Rows) (*Account, error) {
+	account := new(Account)
+	err := rows.Scan(
+		&account.ID,
+		&account.FirstName,
+		&account.Lastname,
+		&account.Number,
+		&account.Balance,
+		&account.CreatedAt,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return account, nil
+}
+
+func (s *PostgresStore) DeleteAccount(id int) error {
+	_, err := s.db.Query("delete from account where id = $1", id)
+
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("Deleted %d", id)
+
 	return nil
 }
 
@@ -128,6 +145,16 @@ func (s *PostgresStore) UpdateAccount(*Account) error {
 	return nil
 }
 
-func (s *PostgresStore) GetAccountByID(int) (*Account, error) {
-	return nil, nil
+func (s *PostgresStore) GetAccountByID(id int) (*Account, error) {
+
+	rows, err := s.db.Query("select * from account where id = $1", id)
+
+	if err != nil {
+		return nil, err
+	}
+	for rows.Next() {
+		return scanIntoAccount(rows)
+	}
+
+	return nil, fmt.Errorf("account %d not found ", id)
 }
