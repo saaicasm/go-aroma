@@ -48,12 +48,14 @@ func JwtAuth(handlerFunc http.HandlerFunc) http.HandlerFunc {
 		fmt.Println("This is how you add middleware")
 
 		tokenString := r.Header.Get("jwt-token")
-
-		_, err := validateJWT(tokenString)
+		token, err := validateJWT(tokenString)
 
 		if err != nil {
 			WriteJSON(w, http.StatusForbidden, APIError{Error: "Invalid Jwt Token"})
 			return
+		}
+		if !token.Valid {
+			WriteJSON(w, http.StatusForbidden, APIError{Error: "Invalid Jwt Token"})
 		}
 
 		handlerFunc(w, r)
